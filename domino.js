@@ -122,6 +122,8 @@ function aplicarEstadoOnline(dados) {
   if (!document.body.classList.contains('jogo-ativo') && !contagemDeInicio) iniciarPeloMenu();
   prepararMesaOnline();
   if (!mudou) {
+    tempoRestante = game.timeRemaining ?? tempoRestante;
+    atualizarCronometro();
     atualizarIndicadorDaVez();
     return;
   }
@@ -151,17 +153,18 @@ function sincronizarCronometroOnline() {
   temporizadorOnline = null;
   if (!estadoOnline?.game || jogoEncerrado) return;
 
-  tempoRestante = 60;
+  tempoRestante = estadoOnline.game.timeRemaining ?? 60;
   atualizarCronometro();
-  if (!vezDoJogador) return;
 
   temporizadorOnline = setInterval(() => {
     tempoRestante = Math.max(0, tempoRestante - 1);
     atualizarCronometro();
     if (tempoRestante > 0) return;
-    clearInterval(temporizadorOnline);
-    temporizadorOnline = null;
-    resolverTempoOnline();
+    if (vezDoJogador) {
+      clearInterval(temporizadorOnline);
+      temporizadorOnline = null;
+      resolverTempoOnline();
+    }
   }, 1000);
 }
 
