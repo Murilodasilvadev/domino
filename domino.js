@@ -110,6 +110,7 @@ function aplicarEstadoOnline(dados) {
   if (!dados?.game) return;
   estadoOnline = dados;
   if (!document.body.classList.contains('jogo-ativo') && !contagemDeInicio) iniciarPeloMenu();
+  prepararMesaOnline();
   const game = dados.game;
   maoAtualJogador = game.hand;
   maoAtualCpu = Array.from({ length: game.opponentCount }, () => ({}));
@@ -125,6 +126,27 @@ function aplicarEstadoOnline(dados) {
   atualizarMaoDoJogador(); atualizarMaoDaCpu(); atualizarBotoesDaVez();
   if (pecaCentral) renderizarMesa();
   if (jogoEncerrado) mostrarResultadoOnline(game.finished, dados.you);
+}
+
+// A partida local cria a área da mesa durante a distribuição animada. Como a
+// partida online já chega distribuída pelo servidor, ela precisa dessa montagem
+// própria antes de renderizar as peças e o monte.
+function prepararMesaOnline() {
+  const lista = document.getElementById('lista');
+  if (!lista) return;
+
+  if (!areaJogo || !lista.contains(areaJogo)) {
+    lista.innerHTML = '';
+    areaJogo = document.createElement('li');
+    areaJogo.className = 'area-jogo';
+    lista.appendChild(areaJogo);
+    inicializarAreaDeMesaDrag();
+
+    monteFechado = document.createElement('li');
+    monteFechado.className = 'monte-aberto oculto';
+    lista.appendChild(monteFechado);
+  }
+  mostrarBotoesDoJogo();
 }
 
 function mostrarResultadoOnline(vencedor, voce) {
