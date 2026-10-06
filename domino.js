@@ -817,7 +817,8 @@ function jogarPeca(indice, ladoEscolhido = null) {
     if (!ladoEscolhido && lados.esquerda && lados.direita && extremosMesa && extremosMesa.esquerda !== extremosMesa.direita) {
       indicePecaPendente = indice; document.getElementById('opcoes-jogada').classList.remove('oculto'); return;
     }
-    acaoOnline('play', { cardId: peca.id, side: determinarLadoDeJogada(peca, ladoEscolhido) }).catch(erro => alert(erro.message));
+    const lado = determinarLadoDeJogada(peca, ladoEscolhido);
+    acaoOnline('play', { cardId: peca.id, side: lado === 'esquerda' ? 'left' : 'right' }).catch(erro => alert(erro.message));
     return;
   }
   const pecaSelecionada = maoAtualJogador[indice];
@@ -1614,6 +1615,11 @@ function sairParaMenu() {
 function atualizarCronometro() {
   const cronometro = document.getElementById('cronometro');
   if (!cronometro) return;
+  if (estadoOnline?.game) {
+    cronometro.textContent = '⌁ Ao vivo';
+    cronometro.classList.remove('tempo-acabando');
+    return;
+  }
   cronometro.textContent = `⏱ ${tempoRestante}s`;
   cronometro.classList.toggle('tempo-acabando', tempoRestante <= 10 && tempoRestante > 0);
 }
