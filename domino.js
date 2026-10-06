@@ -42,6 +42,8 @@ let corMesaAtual = localStorage.getItem('corMesaDomino') || 'azul';
 let salaOnline = null;
 let estadoOnline = null;
 let temporizadorSalaOnline = null;
+let assinaturaEstadoOnline = null;
+let temporizadorOnline = null;
 
 async function requisicaoOnline(caminho, opcoes = {}) {
   const resposta = await fetch(caminho, { headers: { 'Content-Type': 'application/json' }, ...opcoes });
@@ -108,10 +110,21 @@ async function acaoOnline(type, extra = {}) {
 
 function aplicarEstadoOnline(dados) {
   if (!dados?.game) return;
+  const game = dados.game;
+  const assinatura = [
+    game.board.map((peca) => peca.id).join(','),
+    game.hand.map((peca) => peca.id).join(','),
+    game.opponentCount, game.stockCount, game.turn, game.mustOpen || '', game.finished ?? ''
+  ].join('|');
+  const mudou = assinatura !== assinaturaEstadoOnline;
+  assinaturaEstadoOnline = assinatura;
   estadoOnline = dados;
   if (!document.body.classList.contains('jogo-ativo') && !contagemDeInicio) iniciarPeloMenu();
   prepararMesaOnline();
-  const game = dados.game;
+  if (!mudou) {
+    atualizarIndicadorDaVez();
+    return;
+  }
   maoAtualJogador = game.hand;
   maoAtualCpu = Array.from({ length: game.opponentCount }, () => ({}));
   monteAtual = Array.from({ length: game.stockCount }, () => ({}));
@@ -121,11 +134,48 @@ function aplicarEstadoOnline(dados) {
   pecasDoLadoEsquerdo = [];
   pecasDoLadoDireito = game.board.slice(1);
   vezDoJogador = game.turn === dados.you && game.finished === null;
+  pecaObrigatoria = game.mustOpen && game.turn === dados.you
+    ? maoAtualJogador.find((peca) => peca.id === game.mustOpen) || null
+    : null;
   jogoEncerrado = game.finished !== null;
   document.getElementById('rotulo-adversario').innerHTML = 'Amigo: <strong id="v-cpu">0</strong>';
   atualizarMaoDoJogador(); atualizarMaoDaCpu(); atualizarBotoesDaVez();
   if (pecaCentral) renderizarMesa();
+  else if (areaJogo) areaJogo.innerHTML = '';
+  sincronizarCronometroOnline();
   if (jogoEncerrado) mostrarResultadoOnline(game.finished, dados.you);
+}
+
+function sincronizarCronometroOnline() {
+  clearInterval(temporizadorOnline);
+  temporizadorOnline = null;
+  if (!estadoOnline?.game || jogoEncerrado) return;
+
+  tempoRestante = 60;
+  atualizarCronometro();
+  if (!vezDoJogador) return;
+
+  temporizadorOnline = setInterval(() => {
+    tempoRestante = Math.max(0, tempoRestante - 1);
+    atualizarCronometro();
+    if (tempoRestante > 0) return;
+    clearInterval(temporizadorOnline);
+    temporizadorOnline = null;
+    resolverTempoOnline();
+  }, 1000);
+}
+
+function resolverTempoOnline() {
+  if (!vezDoJogador || !estadoOnline?.game) return;
+  const obrigatoria = pecaObrigatoria
+    ? maoAtualJogador.findIndex((peca) => peca.id === pecaObrigatoria.id)
+    : -1;
+  if (obrigatoria >= 0) return jogarPeca(obrigatoria);
+
+  const indiceJogavel = maoAtualJogador.findIndex(podeJogar);
+  if (indiceJogavel >= 0) return jogarPeca(indiceJogavel);
+  if (monteAtual.length > 0) return acaoOnline('draw').catch((erro) => alert(erro.message));
+  acaoOnline('pass').catch((erro) => alert(erro.message));
 }
 
 // A partida local cria a área da mesa durante a distribuição animada. Como a
@@ -1610,9 +1660,12 @@ function iniciarProximaRodada() {
 
 function sairParaMenu() {
   clearInterval(temporizadorSalaOnline);
+  clearInterval(temporizadorOnline);
   temporizadorSalaOnline = null;
+  temporizadorOnline = null;
   salaOnline = null;
   estadoOnline = null;
+  assinaturaEstadoOnline = null;
   pararTemporizadorJogador();
   clearTimeout(temporizadorCpu);
   clearInterval(temporizadorCronometroCpu);
@@ -1637,11 +1690,6 @@ function sairParaMenu() {
 function atualizarCronometro() {
   const cronometro = document.getElementById('cronometro');
   if (!cronometro) return;
-  if (estadoOnline?.game) {
-    cronometro.textContent = '⌁ Ao vivo';
-    cronometro.classList.remove('tempo-acabando');
-    return;
-  }
   cronometro.textContent = `⏱ ${tempoRestante}s`;
   cronometro.classList.toggle('tempo-acabando', tempoRestante <= 10 && tempoRestante > 0);
 }
