@@ -1,0 +1,9 @@
+{
+  "name": "domino-real",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^7.0.0"
+  }
+}

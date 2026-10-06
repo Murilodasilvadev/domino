@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modelos de Dominó</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f1115;
+      --card: #171a20;
+      --border: rgba(255,255,255,.08);
+      --text: #f5f7fb;
+      --muted: #9da5b4;
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 42px 22px;
+      background:
+        radial-gradient(circle at top, #202631 0%, #0f1115 45%, #0b0d11 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .container {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 28px;
+    }
+
+    .header h1 {
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.05;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+    }
+
+    .model-card {
+      min-height: 360px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+      box-shadow: 0 24px 70px rgba(0,0,0,.22);
+      overflow: hidden;
+    }
+
+    .model-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .model-title h2 {
+      font-size: 18px;
+    }
+
+    .model-title span {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .showcase {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 22px;
+      min-height: 270px;
+      perspective: 1000px;
+    }
+
+    .domino {
+      --tile-bg: #fff;
+      --pip-color: #111;
+      --line-color: rgba(0,0,0,.72);
+
+      width: 104px;
+      height: 208px;
+      border-radius: 18px;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: 1fr 5px 1fr;
+      background: var(--tile-bg);
+      border: 1px solid rgba(0,0,0,.10);
+      box-shadow:
+        0 22px 36px rgba(0,0,0,.30),
+        inset 0 1px 0 rgba(255,255,255,.35),
+        inset 0 -2px 8px rgba(0,0,0,.08);
+      transform: rotate(var(--rotate, 0deg)) translateY(var(--drop, 0px));
+      transition: .25s ease;
+    }
+
+    .domino:hover {
+      transform: rotate(var(--rotate, 0deg)) translateY(calc(var(--drop, 0px) - 8px));
+    }
+
+    .white {
+      --tile-bg: linear-gradient(145deg, #ffffff 0%, #f0f0ee 100%);
+      --line-color: #171717;
+    }
+
+    .black {
+      --tile-bg: linear-gradient(145deg, #17191d 0%, #050607 100%);
+      --line-color: rgba(255,255,255,.72);
+      border-color: rgba(255,255,255,.08);
+    }
+
+    .divider {
+      width: 82%;
+      height: 4px;
+      margin: auto;
+      border-radius: 999px;
+      background: var(--line-color);
+      box-shadow: 0 1px 2px rgba(0,0,0,.35);
+    }
+
+    .half {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .pip {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--pip-color);
+      box-shadow:
+        inset 0 2px 2px rgba(255,255,255,.25),
+        inset 0 -2px 2px rgba(0,0,0,.25),
+        0 1px 2px rgba(0,0,0,.22);
+      transform: translate(-50%, -50%);
+    }
+
+    .p1 { left: 23%; top: 22%; }
+    .p2 { left: 50%; top: 22%; }
+    .p3 { left: 77%; top: 22%; }
+    .p4 { left: 23%; top: 50%; }
+    .p5 { left: 50%; top: 50%; }
+    .p6 { left: 77%; top: 50%; }
+    .p7 { left: 23%; top: 78%; }
+    .p8 { left: 50%; top: 78%; }
+    .p9 { left: 77%; top: 78%; }
+
+    .pip.black-pip { background: #101114; }
+    .pip.white-pip { background: #f7f7f7; }
+
+    .red    { --pip-color: #ef4444; }
+    .blue   { --pip-color: #3b82f6; }
+    .green  { --pip-color: #22c55e; }
+    .yellow { --pip-color: #facc15; }
+    .purple { --pip-color: #a855f7; }
+    .orange { --pip-color: #f97316; }
+    .cyan   { --pip-color: #22d3ee; }
+
+    .legend {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.07);
+      color: #cbd2dc;
+      font-size: 12px;
+    }
+
+    @media (max-width: 820px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 26px 14px;
+      }
+
+      .model-card {
+        padding: 16px;
+      }
+
+      .showcase {
+        gap: 10px;
+        transform: scale(.86);
+        transform-origin: center;
+        margin-inline: -28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>Modelos de Dominó</h1>
+      <p>Quatro acabamentos ilustrados apenas com HTML e CSS.</p>
+    </header>
+
+    <section class="grid">
+
+      <!-- MODELO 1 -->
+      <article class="model-card">
+        <div class="model-title">
+          <h2>Modelo 1</h2>
+          <span>Branco + bolinhas pretas</span>
+        </div>
+
+        <div class="showcase">
+          <div class="domino white" style="--rotate:-7deg; --drop:14px;">
+            <div class="half">
+              <i class="pip black-pip p1"></i><i class="pip black-pip p3"></i>
+              <i class="pip black-pip p5"></i>
+              <i class="pip black-pip p7"></i><i class="pip black-pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half">
+              <i class="pip black-pip p1"></i><i class="pip black-pip p3"></i>
+              <i class="pip black-pip p7"></i><i class="pip black-pip p9"></i>
+            </div>
+          </div>
+
+          <div class="domino white" style="--rotate:0deg;">
+            <div class="half">
+              <i class="pip black-pip p1"></i><i class="pip black-pip p3"></i>
+              <i class="pip black-pip p4"></i><i class="pip black-pip p6"></i>
+              <i class="pip black-pip p7"></i><i class="pip black-pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half">
+              <i class="pip black-pip p5"></i>
+            </div>
+          </div>
+
+          <div class="domino white" style="--rotate:7deg; --drop:16px;">
+            <div class="half">
+              <i class="pip black-pip p1"></i><i class="pip black-pip p5"></i><i class="pip black-pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half">
+              <i class="pip black-pip p1"></i><i class="pip black-pip p3"></i>
+              <i class="pip black-pip p7"></i><i class="pip black-pip p9"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="tag">clássico</span>
+          <span class="tag">alto contraste</span>
+        </div>
+      </article>
+
+      <!-- MODELO 2 -->
+      <article class="model-card">
+        <div class="model-title">
+          <h2>Modelo 2</h2>
+          <span>Branco + bolinhas coloridas</span>
+        </div>
+
+        <div class="showcase">
+          <div class="domino white red" style="--rotate:-7deg; --drop:14px;">
+            <div class="half">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p5"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half green">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+          </div>
+
+          <div class="domino white blue">
+            <div class="half">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p4"></i><i class="pip p6"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half yellow">
+              <i class="pip p5"></i>
+            </div>
+          </div>
+
+          <div class="domino white purple" style="--rotate:7deg; --drop:16px;">
+            <div class="half">
+              <i class="pip p1"></i><i class="pip p5"></i><i class="pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half orange">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="tag">didático</span>
+          <span class="tag">visual vibrante</span>
+        </div>
+      </article>
+
+      <!-- MODELO 3 -->
+      <article class="model-card">
+        <div class="model-title">
+          <h2>Modelo 3</h2>
+          <span>Preto + bolinhas brancas</span>
+        </div>
+
+        <div class="showcase">
+          <div class="domino black" style="--rotate:-7deg; --drop:14px;">
+            <div class="half">
+              <i class="pip white-pip p1"></i><i class="pip white-pip p3"></i>
+              <i class="pip white-pip p5"></i>
+              <i class="pip white-pip p7"></i><i class="pip white-pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half">
+              <i class="pip white-pip p1"></i><i class="pip white-pip p3"></i>
+              <i class="pip white-pip p7"></i><i class="pip white-pip p9"></i>
+            </div>
+          </div>
+
+          <div class="domino black">
+            <div class="half">
+              <i class="pip white-pip p1"></i><i class="pip white-pip p3"></i>
+              <i class="pip white-pip p4"></i><i class="pip white-pip p6"></i>
+              <i class="pip white-pip p7"></i><i class="pip white-pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half">
+              <i class="pip white-pip p5"></i>
+            </div>
+          </div>
+
+          <div class="domino black" style="--rotate:7deg; --drop:16px;">
+            <div class="half">
+              <i class="pip white-pip p1"></i><i class="pip white-pip p5"></i><i class="pip white-pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half">
+              <i class="pip white-pip p1"></i><i class="pip white-pip p3"></i>
+              <i class="pip white-pip p7"></i><i class="pip white-pip p9"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="tag">elegante</span>
+          <span class="tag">premium</span>
+        </div>
+      </article>
+
+      <!-- MODELO 4 -->
+      <article class="model-card">
+        <div class="model-title">
+          <h2>Modelo 4</h2>
+          <span>Preto + bolinhas coloridas</span>
+        </div>
+
+        <div class="showcase">
+          <div class="domino black yellow" style="--rotate:-7deg; --drop:14px;">
+            <div class="half">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p5"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half red">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+          </div>
+
+          <div class="domino black cyan">
+            <div class="half">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p4"></i><i class="pip p6"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half green">
+              <i class="pip p5"></i>
+            </div>
+          </div>
+
+          <div class="domino black purple" style="--rotate:7deg; --drop:16px;">
+            <div class="half">
+              <i class="pip p1"></i><i class="pip p5"></i><i class="pip p9"></i>
+            </div>
+            <div class="divider"></div>
+            <div class="half orange">
+              <i class="pip p1"></i><i class="pip p3"></i><i class="pip p7"></i><i class="pip p9"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="tag">moderno</span>
+          <span class="tag">mais chamativo</span>
+        </div>
+      </article>
+
+    </section>
+  </main>
+</body>
+</html>

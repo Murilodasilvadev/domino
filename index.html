@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dominó Real — jogo de dominó para navegador. Jogue contra a CPU, personalize peças e mesa.">
+  <title>Dominó Real</title>
+  <link rel="icon" href="capadominoreal.png" type="image/png">
+  <link rel="stylesheet" href="domino.css">
+  <script src="domino.js" defer></script>
+
+</head>
+
+<body>
+  <div id="tela-abertura" class="tela-abertura">
+    <section class="splash-logo" aria-label="Dominó real">
+      <img src="capadominoreal.png" alt="Logo do Dominó real">
+      <strong>dominó real</strong>
+    </section>
+    <section id="menu-principal" class="menu-principal oculto" aria-label="Menu principal">
+      <img src="capadominoreal.png" alt="Logo do Dominó real">
+      <h1>Dominó real</h1>
+      <button type="button" onclick="iniciarPeloMenu()">Jogar</button>
+      <button type="button" onclick="mostrarSalaOnline()">Jogar online</button>
+      <button type="button" onclick="mostrarRegras()">Regras</button>
+      <button type="button" onclick="mostrarPersonalizacao()">Personalizar</button>
+      <button type="button" class="botao-secundario" onclick="fecharPagina()">Sair</button>
+    </section>
+    <section id="painel-online" class="painel-regras oculto painel-online" aria-label="Sala online">
+      <h2>Jogar com amigos</h2>
+      <p>Crie uma sala e envie o código ou o link para uma pessoa entrar de outro dispositivo.</p>
+      <div id="online-inicial" class="online-inicial">
+        <button type="button" onclick="criarSalaOnline()">Criar sala</button>
+        <label for="codigo-sala">Já recebeu um código?</label>
+        <div class="entrar-sala"><input id="codigo-sala" maxlength="6" placeholder="Ex.: A1B2C3" autocomplete="off"><button type="button" onclick="entrarNaSalaOnline()">Entrar</button></div>
+      </div>
+      <div id="online-sala" class="online-sala oculto" aria-live="polite">
+        <p id="status-sala-online"></p>
+        <strong id="codigo-sala-exibido"></strong>
+        <div class="acoes-sala"><button type="button" onclick="copiarConviteOnline()">Copiar convite</button><button id="btn-iniciar-online" type="button" class="oculto" onclick="iniciarSalaOnline()">Iniciar partida</button></div>
+      </div>
+      <button type="button" class="botao-secundario" onclick="voltarAoMenu()">Voltar</button>
+    </section>
+    <section id="painel-regras" class="painel-regras oculto" aria-label="Regras do jogo">
+      <h2>Como jogar</h2>
+      <p>Encaixe peças com o mesmo número nas pontas da corrente. Quem tem a maior carroça abre o jogo.</p>
+      <p>Você tem 60 segundos para jogar. Sem jogada, compre do monte até conseguir jogar — só passe a vez com o monte vazio.</p>
+      <p>Vence quem bater primeiro (ficar sem peças). Se a mesa fechar, vence quem tiver menos pontos somados na mão.</p>
+      <button type="button" onclick="voltarAoMenu()">Voltar</button>
+    </section>
+    <section id="painel-personalizacao" class="painel-personalizacao oculto" aria-label="Personalizar peças">
+      <h2>Personalizar peças</h2>
+      <p>Escolha o acabamento que será usado durante a partida.</p>
+      <div class="opcoes-modelo" role="radiogroup" aria-label="Modelos de peças">
+        <button type="button" class="opcao-modelo selecionada" data-modelo="classico" onclick="selecionarModelo('classico')" role="radio" aria-checked="true">
+          <span class="mini-peca modelo-classico"><i></i><i></i><i></i><i></i></span><span><strong>Modelo 1</strong>Branco + bolinhas pretas</span>
+        </button>
+        <button type="button" class="opcao-modelo" data-modelo="colorido-claro" onclick="selecionarModelo('colorido-claro')" role="radio" aria-checked="false">
+          <span class="mini-peca modelo-colorido-claro"><i></i><i></i><i></i><i></i></span><span><strong>Modelo 2</strong>Branco + bolinhas coloridas</span>
+        </button>
+        <button type="button" class="opcao-modelo" data-modelo="escuro" onclick="selecionarModelo('escuro')" role="radio" aria-checked="false">
+          <span class="mini-peca modelo-escuro"><i></i><i></i><i></i><i></i></span><span><strong>Modelo 3</strong>Preto + bolinhas brancas</span>
+        </button>
+        <button type="button" class="opcao-modelo" data-modelo="colorido-escuro" onclick="selecionarModelo('colorido-escuro')" role="radio" aria-checked="false">
+          <span class="mini-peca modelo-colorido-escuro"><i></i><i></i><i></i><i></i></span><span><strong>Modelo 4</strong>Preto + bolinhas coloridas</span>
+        </button>
+      </div>
+      <h3 class="titulo-personalizacao">Personalizar mesa</h3>
+      <div class="opcoes-mesa" role="radiogroup" aria-label="Cores da mesa">
+        <button type="button" class="opcao-mesa selecionada" data-cor-mesa="azul" onclick="selecionarCorMesa('azul')" role="radio" aria-checked="true"><span class="amostra-mesa azul"></span>Azul</button>
+        <button type="button" class="opcao-mesa" data-cor-mesa="verde" onclick="selecionarCorMesa('verde')" role="radio" aria-checked="false"><span class="amostra-mesa verde"></span>Verde</button>
+        <button type="button" class="opcao-mesa" data-cor-mesa="vermelho" onclick="selecionarCorMesa('vermelho')" role="radio" aria-checked="false"><span class="amostra-mesa vermelho"></span>Vermelho</button>
+        <button type="button" class="opcao-mesa" data-cor-mesa="preto" onclick="selecionarCorMesa('preto')" role="radio" aria-checked="false"><span class="amostra-mesa preto"></span>Preto</button>
+      </div>
+      <h3 class="titulo-personalizacao">Dificuldade da CPU</h3>
+      <div class="opcoes-mesa opcoes-dificuldade" role="radiogroup" aria-label="Dificuldade da CPU">
+        <button type="button" class="opcao-mesa opcao-dificuldade" data-dificuldade="facil" onclick="selecionarDificuldade('facil')" role="radio" aria-checked="true">Fácil · 8–10s</button>
+        <button type="button" class="opcao-mesa opcao-dificuldade" data-dificuldade="medio" onclick="selecionarDificuldade('medio')" role="radio" aria-checked="false">Médio · 5–7s</button>
+        <button type="button" class="opcao-mesa opcao-dificuldade" data-dificuldade="dificil" onclick="selecionarDificuldade('dificil')" role="radio" aria-checked="false">Difícil · 3–5s</button>
+      </div>
+      <button type="button" onclick="voltarAoMenu()">Voltar</button>
+    </section>
+  </div>
+
+  <div id="aviso-orientacao" class="tela-sistema oculto" aria-live="assertive">
+    <div><span>📱</span><h2>Vire o celular</h2><p>Para jogar, coloque o celular na horizontal.</p></div>
+  </div>
+
+  <div id="aviso-offline" class="aviso-offline oculto" role="status" aria-live="assertive">
+    <span>😟</span><div><strong>Ops, parece que você está offline!</strong><small>Verifique sua conexão para continuar online.</small></div>
+  </div>
+
+  <div id="contagem-inicio" class="tela-sistema oculto" aria-live="assertive">
+    <div><p>Prepare-se!</p><strong id="numero-contagem">3</strong></div>
+  </div>
+
+  <main id="app-jogo" aria-hidden="true">
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="capadominoreal.png" alt="domino real" class="logo">
+
+      <div class="brand-info">
+        <span class="game-name">domino real</span>
+        <span class="version">beta</span>
+      </div>
+      <h1 id="titulo-principal">🁘 Dominó Real</h1>
+
+    </div>
+
+    <div class="actions">
+      <button id="btn-som" class="btn-som" type="button" onclick="alternarSom()" aria-pressed="false">
+        🔊 Som
+      </button>
+      <button id="btn-pausar" class="btn-pausar oculto" type="button" onclick="pausarJogo()">Ⅱ Pausar</button>
+
+
+
+
+      <div class="tempo-vez">
+        <span id="indicador-vez" class="indicador-vez" aria-live="polite">Aguardando</span>
+        <span id="cronometro" class="cronometro" title="Tempo para jogar">⏱ 60s</span>
+      </div>
+      <span class="online">⌁Online</span>
+      <button type="button" class="logout" onclick="fecharPagina()">↪ Sair</button>
+    </div>
+  </header>
+
+
+  <div id="placar">
+    <span>Vitórias</span>
+    <span>Você: <strong id="v-jogador">0</strong></span>
+    <span id="rotulo-adversario">CPU: <strong id="v-cpu">0</strong></span>
+    <span id="pecas-cpu">CPU: 0 peças</span>
+  </div>
+
+
+
+
+  <div id="cpu-mao"></div>
+
+   <div id="mesa"> 
+    <ul id="lista"></ul>
+
+  </div>
+
+  <div id="mao-jogador"></div>
+
+  <div id="opcoes-jogada" class="opcoes-jogada oculto" role="status" aria-live="polite">
+    <span>Esta peça encaixa nas duas pontas:</span>
+    <button type="button" onclick="confirmarJogada('esquerda')">← Jogar à esquerda</button>
+    <button type="button" onclick="confirmarJogada('direita')">Jogar à direita →</button>
+  </div>
+
+
+  <div id="controles">
+
+    <button id="btn-iniciar" class="oculto" onclick="teste()">Começar jogo</button>
+    <button id="btn-comprar" class="oculto" onclick="comprarPeca()" aria-hidden="true" tabindex="-1">Comprar peça</button>
+    <button id="btn-passar" class="oculto" onclick="passarVez()" aria-hidden="true" tabindex="-1">Passar a vez</button>
+    <button id="btn-sair" class="oculto" onclick="novojogo()" aria-hidden="true" tabindex="-1">sair</button>
+  </div>
+  <!--<div class="modal show">
+  vc deseja msm sair? <br><br>
+
+  ok  cancel
+
+
+</div> -->
+
+  <audio id="musica" src="muscia de fundo domino.mp3" preload="auto" loop aria-hidden="true"></audio>
+  <audio id="som-peca" src="batida na mesa.mp3" preload="auto" aria-hidden="true"></audio>
+
+  <div id="modal-vitoria" class="modal-vitoria" role="dialog" aria-modal="true" aria-labelledby="titulo-vitoria">
+    <div class="cartao-vitoria">
+      <div class="confetes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="trofeu" aria-hidden="true">🏆</div>
+      <h2 id="titulo-vitoria">Parabéns!</h2>
+      <p id="texto-vitoria"></p>
+    <div class="acoes-vitoria">
+        <button type="button" onclick="iniciarProximaRodada()">Nova rodada</button>
+        <button type="button" class="botao-secundario" onclick="sairParaMenu()">Sair</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="cima"></div>
+  <div id="modal-pausa" class="modal-pausa" role="dialog" aria-modal="true" aria-labelledby="titulo-pausa">
+    <section class="cartao-pausa">
+      <h2 id="titulo-pausa">Jogo pausado</h2>
+      <div id="conteudo-pausa">
+        <p>A partida está segura. O que você quer fazer?</p>
+        <div class="acoes-pausa">
+          <button type="button" onclick="retomarJogo()">Continuar</button>
+          <button type="button" onclick="novaRodadaPausada()">Novo jogo</button>
+          <button type="button" class="botao-escuro" onclick="mostrarRegrasPausa()">Regras</button>
+          <button type="button" class="botao-escuro" onclick="mostrarModelosPausa()">Personalizar</button>
+          <button type="button" class="botao-escuro" onclick="sairParaMenu()">Sair para o menu</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  </main>
+</body>
+</html>
